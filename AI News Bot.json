@@ -1,0 +1,172 @@
+{
+  "name": "AI News Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -304,
+        -96
+      ],
+      "id": "5a0319ee-9017-46b6-a039-ba220df141fa",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://news.google.com/rss/search?q=\"latest drone news\" OR \"UAV technology\" OR \"DGCA drones India\"&hl=en-IN&gl=IN&ceid=IN:en",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        -32,
+        -96
+      ],
+      "id": "2b4a439f-a60c-47a4-99a6-86b4ed6b0b58",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-goog-api-key",
+              "value": "AIzaSyDffmeeJlfgtPmGcPiPBMq1xIB5XucgPi8"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Your task is to act as a social media expert for the drone industry. Based on the article title and link below, generate a ready-to-publish social media caption.\\n\\n## CONTENT RULES:\\nThe caption must include:\\n1. An engaging hook line.\\n2. A 1-2 line summary.\\n3. A list of 3-5 relevant hashtags.\\n4. The article link.\\n\\n## FORMATTING RULES:\\n- The hook line MUST be on its own separate line.\\n- There MUST be a blank line between the hook line and the summary.\\n- Your response must ONLY contain the social media caption itself. Do not add any introductory text like 'Here is your post'.\\n\\n## ARTICLE INFO:\\n**Title:** {{$json.title}}\\n**Link:** {{$json.link}}\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        160
+      ],
+      "id": "7d88f597-ad96-4e6e-b80c-a4fe08e5a916",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.slice(0, 1);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -96
+      ],
+      "id": "b4772470-e8f1-4d6a-a69a-2441be4d980f",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "={{$json.candidates[0].content.parts[0].text}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        96,
+        160
+      ],
+      "id": "8d984517-91ee-4291-8c59-8df79430d3bd",
+      "name": "Discord",
+      "webhookId": "fffaec6e-84c9-4ce9-9d5e-5bf53ecd6921",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "8oOtMw7BeLX3yV8H",
+          "name": "Discord Webhook account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "35ee4fe3-6543-4028-b492-786fa1f4d25b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7130f9a478db876e7c78ddecb04543a2aa420583a20aaa4c8c50cbb7e88139a1"
+  },
+  "id": "BCqhHREvDrn0MiWZ",
+  "tags": []
+}
